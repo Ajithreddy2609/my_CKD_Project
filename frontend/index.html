@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CKD Clinical Analysis System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="p-4 sm:p-8 text-slate-200">
+
+    <div class="max-w-5xl mx-auto bg-gray-900 shadow-2xl rounded-xl p-6 md:p-10 border border-gray-700">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl font-bold text-teal-400">🩺 CKD Clinical Analysis System</h1>
+            <p class="text-gray-400 mt-2">Enter patient laboratory data to generate an AI-assisted diagnostic insight.</p>
+        </header>
+
+        <form id="predictionForm" class="space-y-10">
+            <section>
+                <h2 class="text-xl font-semibold text-gray-200 mb-6 border-b border-gray-700 pb-2">1. Laboratory Values (Numerical)</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div><label class="block text-xs uppercase text-gray-500 mb-1">Age</label><input type="number" id="age" required placeholder="Years" class="input-field w-full rounded-md p-2 border"></div>
+                    <div><label class="block text-xs uppercase text-gray-500 mb-1">Blood Pressure</label><input type="number" id="bp" required placeholder="mm/Hg" class="input-field w-full rounded-md p-2 border"></div>
+                    <div><label class="block text-xs uppercase text-gray-500 mb-1">Specific Gravity</label><input type="number" id="sg" step="0.005" required placeholder="1.005 - 1.030" class="input-field w-full rounded-md p-2 border"></div>
+                    <div><label class="block text-xs uppercase text-gray-500 mb-1">Albumin (0-5)</label><input type="number" id="al" required placeholder="Score 0-5" class="input-field w-full rounded-md p-2 border"></div>
+                    <div><label class="block text-xs uppercase text-gray-500 mb-1">Sugar (0-5)</label><input type="number" id="su" required placeholder="Score 0-5" class="input-field w-full rounded-md p-2 border"></div>
+                    <div><label class="block text-xs uppercase text-gray-500 mb-1">Blood Glucose</label><input type="number" id="bgr" step="0.1" required placeholder="mg/dL" class="input-field w-full rounded-md p-2 border"></div>
+                    <div><label class="block text-xs uppercase text-gray-500 mb-1">Blood Urea</label><input type="number" id="bu" step="0.1" required placeholder="mg/dL" class="input-field w-full rounded-md p-2 border"></div>
+                    <div><label class="block text-xs uppercase text-gray-500 mb-1">Serum Creatinine</label><input type="number" id="sc" step="0.1" required placeholder="mg/dL" class="input-field w-full rounded-md p-2 border"></div>
+                    <div><label class="block text-xs uppercase text-gray-500 mb-1">Sodium</label><input type="number" id="sod" step="0.1" required placeholder="mEq/L" class="input-field w-full rounded-md p-2 border"></div>
+                    <div><label class="block text-xs uppercase text-gray-500 mb-1">Potassium</label><input type="number" id="pot" step="0.1" required placeholder="mEq/L" class="input-field w-full rounded-md p-2 border"></div>
+                    <div><label class="block text-xs uppercase text-gray-500 mb-1">Hemoglobin</label><input type="number" id="hemo" step="0.1" required placeholder="g/dL" class="input-field w-full rounded-md p-2 border"></div>
+                    <div><label class="block text-xs uppercase text-gray-500 mb-1">Packed Cell Vol</label><input type="number" id="pcv" required placeholder="%" class="input-field w-full rounded-md p-2 border"></div>
+                    <div><label class="block text-xs uppercase text-gray-500 mb-1">White Cell Count</label><input type="number" id="wc" required placeholder="cells/mcL" class="input-field w-full rounded-md p-2 border"></div>
+                    <div><label class="block text-xs uppercase text-gray-500 mb-1">Red Cell Count</label><input type="number" id="rc" step="0.1" required placeholder="million/mcL" class="input-field w-full rounded-md p-2 border"></div>
+                </div>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-semibold text-gray-200 mb-6 border-b border-gray-700 pb-2">2. Clinical Findings (Categorical)</h2>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-8">
+                    <div class="input-group">
+                        <label class="block text-xs uppercase text-gray-500 mb-2">Red Blood Cells</label>
+                        <div class="toggle-switch"><label class="toggle-label"><input type="checkbox" id="rbc"><span class="slider"></span></label><span id="rbc-text" class="toggle-text text-red-400">Abnormal</span></div>
+                    </div>
+                    <div class="input-group">
+                        <label class="block text-xs uppercase text-gray-500 mb-2">Pus Cells</label>
+                        <div class="toggle-switch"><label class="toggle-label"><input type="checkbox" id="pc"><span class="slider"></span></label><span id="pc-text" class="toggle-text text-red-400">Abnormal</span></div>
+                    </div>
+                    <div class="input-group">
+                        <label class="block text-xs uppercase text-gray-500 mb-2">Hypertension</label>
+                        <div class="toggle-switch"><label class="toggle-label"><input type="checkbox" id="htn"><span class="slider"></span></label><span id="htn-text" class="toggle-text text-red-400">Yes</span></div>
+                    </div>
+                    <div class="input-group">
+                        <label class="block text-xs uppercase text-gray-500 mb-2">Diabetes</label>
+                        <div class="toggle-switch"><label class="toggle-label"><input type="checkbox" id="dm"><span class="slider"></span></label><span id="dm-text" class="toggle-text text-red-400">Yes</span></div>
+                    </div>
+                    <div class="input-group">
+                        <label class="block text-xs uppercase text-gray-500 mb-2">CAD</label>
+                        <div class="toggle-switch"><label class="toggle-label"><input type="checkbox" id="cad"><span class="slider"></span></label><span id="cad-text" class="toggle-text text-red-400">Yes</span></div>
+                    </div>
+                    <div class="input-group">
+                        <label class="block text-xs uppercase text-gray-500 mb-2">Appetite</label>
+                        <div class="toggle-switch"><label class="toggle-label"><input type="checkbox" id="appet"><span class="slider"></span></label><span id="appet-text" class="toggle-text text-red-400">Poor</span></div>
+                    </div>
+                    <div class="input-group">
+                        <label class="block text-xs uppercase text-gray-500 mb-2">Pedal Edema</label>
+                        <div class="toggle-switch"><label class="toggle-label"><input type="checkbox" id="pe"><span class="slider"></span></label><span id="pe-text" class="toggle-text text-red-400">Yes</span></div>
+                    </div>
+                    <div class="input-group">
+                        <label class="block text-xs uppercase text-gray-500 mb-2">Anemia</label>
+                        <div class="toggle-switch"><label class="toggle-label"><input type="checkbox" id="ane"><span class="slider"></span></label><span id="ane-text" class="toggle-text text-red-400">Yes</span></div>
+                    </div>
+                    <div class="input-group">
+                        <label class="block text-xs uppercase text-gray-500 mb-2">Pus Cell Clumps</label>
+                        <div class="toggle-switch"><label class="toggle-label"><input type="checkbox" id="pcc"><span class="slider"></span></label><span id="pcc-text" class="toggle-text text-red-400">Present</span></div>
+                    </div>
+                    <div class="input-group">
+                        <label class="block text-xs uppercase text-gray-500 mb-2">Bacteria</label>
+                        <div class="toggle-switch"><label class="toggle-label"><input type="checkbox" id="ba"><span class="slider"></span></label><span id="ba-text" class="toggle-text text-red-400">Present</span></div>
+                    </div>
+                </div>
+            </section>
+
+            <button type="submit" id="submitBtn" class="w-full py-4 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-lg transition shadow-xl">Analyze Clinical Data</button>
+        </form>
+
+        <div id="reportContainer" class="mt-12 hidden animate-fade-in bg-gray-800 p-8 rounded-xl border border-gray-700">
+    <h3 class="text-2xl font-bold text-teal-400 mb-6 border-b border-gray-700 pb-2">Diagnostic Summary Report</h3>
+    
+    <div id="recommendationBox" class="mb-6 p-4 bg-teal-900/30 border border-teal-500/50 rounded-lg text-teal-200 font-medium text-center hidden">
+    </div>
+
+    <div id="predictionHeader" class="text-xl p-4 rounded-lg text-center font-bold mb-8"></div>
+    
+    <div class="overflow-x-auto">
+                <table class="w-full text-left text-gray-300">
+                    <thead>
+                        <tr class="text-teal-400 border-b border-gray-700 uppercase text-xs">
+                            <th class="py-3">Parameter</th>
+                            <th class="py-3">Recorded Value</th>
+                            <th class="py-3">Reference Range</th>
+                            <th class="py-3">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="insightTableBody"></tbody>
+                </table>
+            </div>
+            <p class="text-[10px] text-gray-500 mt-8 italic text-center">AI-assisted analysis. Not a substitute for clinical diagnosis.</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
