@@ -10,7 +10,7 @@ app = FastAPI(title="CKD Clinical Decision Support API")
 # --- 1. HEALTH CHECK ---
 @app.get("/")
 def read_root():
-    return {"status": "CKD API is running", "version": "1.1.0"}
+    return {"status": "CKD API is running", "version": "1.2.0"}
 
 # --- 2. CONFIGURATION ---
 MODEL_FILE = "backend/rf_pipeline.pkl" 
@@ -71,34 +71,31 @@ async def predict_ckd(data: CKDInput):
         probs = pipeline.predict_proba(input_df)[0]
         probability_val = probs[1] if len(probs) > 1 else probs[0]
 
-        # 2. HIGH CERTAINTY THRESHOLD (Set to 70%)
-        # This requires the AI to be very sure before flagging Positive
-        is_positive = (probability_val > 0.70) 
+        # 2. BRUTAL CERTAINTY THRESHOLD (Set to 75%)
+        # AI must be significantly confident to flag Positive.
+        is_positive = (probability_val > 0.75) 
 
         # 3. Synchronized Clinical Insights
         insights = []
         for key, range_info in MEDICAL_RANGES.items():
             val = user_dict.get(key)
+            low, high = range_info["min"], range_info["max"]
             
-            # Logic: Tighten the 'Normal' window only if AI detected high risk
-            buffer = 0.05 if is_positive else 0
-            lower_bound = range_info["min"] * (1 + buffer)
-            upper_bound = range_info["max"] * (1 - buffer)
-
-            if key == "sg":
-                status = "Normal" if val >= lower_bound else "At Risk"
+            # Standard range check
+            if low <= val <= high:
+                status = "Normal"
+                # If AI says Positive, flag values within 5% of the edge as Borderline
+                if is_positive:
+                    if val >= high * 0.95 or val <= low * 1.05:
+                        status = "Borderline"
             else:
-                status = "Normal" if (range_info["min"] <= val <= range_info["max"]) else "Abnormal"
-            
-            # Dynamic Labeling for the B.Tech Presentation Logic
-            if is_positive and status == "Normal":
-                if val >= range_info["max"] * 0.9 or val <= range_info["min"] * 1.1:
-                    status = "Borderline"
+                # If value is outside range, it's Abnormal (or At Risk if AI is worried)
+                status = "At Risk" if is_positive else "Abnormal"
 
             insights.append({
                 "parameter": range_info["label"],
                 "value": val,
-                "range": f"{range_info['min']} - {range_info['max']} {range_info['unit']}",
+                "range": f"{low} - {high} {range_info['unit']}",
                 "status": status
             })
 
@@ -107,7 +104,7 @@ async def predict_ckd(data: CKDInput):
             "probability": f"{round(probability_val * 100, 2)}%",
             "insights": insights,
             "recommendation": "High Risk Detected. Consult a nephrologist." if is_positive else "Everything appears normal. Maintain regular checkups.",
-            "disclaimer": "Academic Prototype: Not a clinical diagnosis."
+            "disclaimer": "Academic Prototype: Not for clinical diagnosis."
         }
     except Exception as e:
         print(traceback.format_exc())
