@@ -54,8 +54,8 @@ document.getElementById('predictionForm').addEventListener('submit', async funct
     };
 
     try {
-        // Ensure your FastAPI is running on port 8000
-        const response = await fetch('https://my-ckd-project.onrender.com', {
+        // Add /predict to the end of the URL
+const response = await fetch('https://my-ckd-project.onrender.com/predict', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
