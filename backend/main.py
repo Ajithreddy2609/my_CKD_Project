@@ -10,7 +10,7 @@ app = FastAPI(title="CKD Clinical Decision Support API")
 # --- 1. HEALTH CHECK ---
 @app.get("/")
 def read_root():
-    return {"status": "CKD API is running", "version": "1.0.0"}
+    return {"status": "CKD API is running", "version": "1.1.0"}
 
 # --- 2. CONFIGURATION ---
 MODEL_FILE = "backend/rf_pipeline.pkl" 
@@ -43,13 +43,11 @@ except FileNotFoundError:
     print(f"CRITICAL ERROR: {MODEL_FILE} not found.")
     pipeline = None
 
-# --- 4. DATA MODELS (Sequence must match train_model.py) ---
+# --- 4. DATA MODELS ---
 class CKDInput(BaseModel):
-    # Numerical (14)
     age: float; bp: float; sg: float; al: float; su: float
     bgr: float; bu: float; sc: float; sod: float; pot: float
     hemo: float; pcv: float; wc: float; rc: float
-    # Categorical (10)
     rbc: str; pc: str; pcc: str; ba: str; htn: str
     dm: str; cad: str; appet: str; pe: str; ane: str
 
@@ -69,33 +67,31 @@ async def predict_ckd(data: CKDInput):
         ]
         input_df = input_df[feature_order]
 
-        # 1. Get Core Prediction
-        prediction_idx = pipeline.predict(input_df)[0]
+        # 1. Get Probability
         probs = pipeline.predict_proba(input_df)[0]
         probability_val = probs[1] if len(probs) > 1 else probs[0]
-        is_positive = (prediction_idx == 1)
 
-        # 2. Synchronized Clinical Insights
-        # We now adjust the 'Status' based on the AI's overall finding
+        # 2. HIGH CERTAINTY THRESHOLD (Set to 70%)
+        # This requires the AI to be very sure before flagging Positive
+        is_positive = (probability_val > 0.70) 
+
+        # 3. Synchronized Clinical Insights
         insights = []
         for key, range_info in MEDICAL_RANGES.items():
             val = user_dict.get(key)
             
-            # LOGIC FIX: If AI says Positive, we tighten the 'Normal' window 
-            # to highlight values that contributed to the risk.
-            buffer = 0.05  # 5% sensitivity adjustment
-            lower_bound = range_info["min"] * (1 + buffer) if is_positive else range_info["min"]
-            upper_bound = range_info["max"] * (1 - buffer) if is_positive else range_info["max"]
+            # Logic: Tighten the 'Normal' window only if AI detected high risk
+            buffer = 0.05 if is_positive else 0
+            lower_bound = range_info["min"] * (1 + buffer)
+            upper_bound = range_info["max"] * (1 - buffer)
 
-            # Specific Gravity is reversed (low is bad)
             if key == "sg":
                 status = "Normal" if val >= lower_bound else "At Risk"
             else:
                 status = "Normal" if (range_info["min"] <= val <= range_info["max"]) else "Abnormal"
             
-            # Force "At Risk" status for borderline values if prediction is Positive
+            # Dynamic Labeling for the B.Tech Presentation Logic
             if is_positive and status == "Normal":
-                # If value is within 10% of the danger zone, flag it as 'High/Low'
                 if val >= range_info["max"] * 0.9 or val <= range_info["min"] * 1.1:
                     status = "Borderline"
 
@@ -110,8 +106,8 @@ async def predict_ckd(data: CKDInput):
             "prediction": "Positive for CKD" if is_positive else "Negative for CKD",
             "probability": f"{round(probability_val * 100, 2)}%",
             "insights": insights,
-            "recommendation": "High Risk Detected. Please consult a nephrologist for clinical validation." if is_positive else "Maintain regular health checkups.",
-            "disclaimer": "Academic Prototype: Not for clinical diagnosis."
+            "recommendation": "High Risk Detected. Consult a nephrologist." if is_positive else "Everything appears normal. Maintain regular checkups.",
+            "disclaimer": "Academic Prototype: Not a clinical diagnosis."
         }
     except Exception as e:
         print(traceback.format_exc())
